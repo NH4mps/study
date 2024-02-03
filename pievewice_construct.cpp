@@ -7,50 +7,36 @@
 
 struct PiecewiseConstruct {};
 
-
-// boiler plate realization, all constructors should be doubled.
-// want to make RVO realization if posible
-template <class First, class Second>
-struct MyPairProxy
+template<class Type, class Tuple, size_t ... Ints>
+Type Make(
+    std::integer_sequence<std::size_t, Ints...>,
+    Tuple&& aFirstTuple)
 {
-    template<size_t ... FirstInts, size_t ... SecondInts, class FirstTuple, class SecondTuple>
-    MyPairProxy(
-        std::integer_sequence<std::size_t, FirstInts...>,
-        std::integer_sequence<std::size_t, SecondInts...>,
-        FirstTuple&& aFirstTuple, 
-        SecondTuple&& aSecondTuple)
-        : first(std::get<FirstInts>(std::move(aFirstTuple))...)
-        , second(std::get<SecondInts>(std::move(aSecondTuple))...)
-    {
-
-    }
-
-    template <class FirstT, class SecondT>
-    MyPairProxy(FirstT&& aFirst, SecondT&& aSecond) 
-    : first(std::forward<FirstT>(aFirst))
-    , second(std::forward<SecondT>(aSecond)) {}
-
-    First first;
-    Second second;
-};
+    return Type(std::get<Ints>(std::move(aFirstTuple))...);
+}
 
 template <class First, class Second>
-struct MyPair : public MyPairProxy<First, Second>
+struct MyPair
 {
     template <class FirstT, class SecondT>
     MyPair(FirstT&& aFirst, SecondT&& aSecond) 
-    : MyPairProxy<First, Second>(std::forward<FirstT>(aFirst), std::forward<SecondT>(aSecond)) {}
+    : first(std::forward<FirstT>(aFirst))
+    , second(std::forward<SecondT>(aSecond)) {}
 
     template<class FirstTuple, class SecondTuple>
     MyPair(
         PiecewiseConstruct, 
         FirstTuple&& aFirstTuple, 
         SecondTuple&& aSecondTuple) 
-    : MyPairProxy<First, Second>(
+    : first(Make<First>(
         std::make_index_sequence<std::tuple_size_v<std::decay_t<FirstTuple>>>{},
+        std::forward<FirstTuple>(aFirstTuple)))
+    , second(Make<Second>(
         std::make_index_sequence<std::tuple_size_v<std::decay_t<SecondTuple>>>{},
-        std::forward<FirstTuple>(aFirstTuple), 
-        std::forward<SecondTuple>(aSecondTuple)) {}
+        std::forward<SecondTuple>(aSecondTuple))) {}
+
+    First first;
+    Second second;
 };
 
 namespace Sub 
