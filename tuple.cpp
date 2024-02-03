@@ -100,7 +100,7 @@ template<size_t Num, typename First, typename ... Others>
 constexpr typename TupleElement<Num, First, Others... >::Type& 
 get(Tuple<First, Others...>& t)
 {
-   return get_impl<Num>(IsNumZeroType<Num>::ResType(), t);
+   return get_impl<Num>(typename IsNumZeroType<Num>::ResType(), t);
 }
 
 template<size_t Num, typename First, typename ... Others>
