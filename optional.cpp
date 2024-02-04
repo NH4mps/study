@@ -1,3 +1,4 @@
+#include <cassert>
 #include <iostream>
 #include <vector>
 
@@ -72,16 +73,32 @@ public:
         return false;
     }
 
-    bool operator=(const Optional<T>& aObj)
+    Optional<T>& operator=(const Optional<T>& aObj)
     {
         this->~Optional<T>();
 
         if (aObj.mInited)
         {
-            new (mData) T(aObj.mData);
+            new (mData) T(*reinterpret_cast<const T*>(aObj.mData));
         }
 
         mInited = aObj.mInited;
+
+        return *this;
+    }
+
+    Optional<T>& operator=(Optional<T>&& aObj)
+    {
+        this->~Optional<T>();
+
+        if (aObj.mInited)
+        {
+            new (mData) T(std::move(*reinterpret_cast<T*>(aObj.mData)));
+        }
+
+        mInited = aObj.mInited;
+
+        return *this;
     }
 
 private:
@@ -103,4 +120,13 @@ int main()
     Type typeVar1;
     Optional<Type> var1{Type()};
     Optional<Type> var2{typeVar1};
+    
+    Optional<Type> var3{Nullopt};
+    assert(!var3.HasValue());
+
+    var1 = var3;
+    assert(!var1.HasValue());
+
+    var2 = Nullopt;
+    assert(!var2.HasValue());
 }
