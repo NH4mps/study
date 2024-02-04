@@ -6,7 +6,7 @@
 template<class Container>
 struct Iter
 {
-    using type = typename Container::iterator;
+    using Type = typename Container::iterator;
 
     static auto begin(Container& self)
     {
@@ -22,7 +22,7 @@ struct Iter
 template<class Container>
 struct Iter<const Container>
 {
-    using type = typename Container::const_iterator;
+    using Type = typename Container::const_iterator;
 
     static auto begin(const Container& self)
     {
@@ -41,7 +41,7 @@ struct ForeachWrapper
     using Iter = Iter<typename std::remove_reference<Container>::type>;
 
     ForeachWrapper(Container&& aContainer) 
-        : container(aContainer),  it(Iter::begin(container)) {}
+        : container(std::forward<Container>(aContainer)),  it(Iter::begin(container)) {}
 
     void Increase()
     {
@@ -54,7 +54,7 @@ struct ForeachWrapper
         return it == Iter::end(container);
     }
 
-    typename Iter::type CurrentIt()
+    typename Iter::Type CurrentIt()
     {
         return it;
     }
@@ -63,7 +63,7 @@ struct ForeachWrapper
 
 private:
     Container container;
-    typename Iter::type it;
+    typename Iter::Type it;
 };
 
 template<class Container>
@@ -77,11 +77,30 @@ ForeachWrapper<Container> MakeWrapper(Container&& aContainer)
         for (TypedVar = *wrapper.CurrentIt(); wrapper.control; wrapper.control ^= 1)
 
 
+class DebugVector : public std::vector<int>
+{
+public:
+    using Base = std::vector<int>;
+    using Base::Base;
+
+    DebugVector(const DebugVector& aOther)
+    : Base(aOther)
+    {
+        std::cout << "Copy" << std::endl;
+    }
+
+    DebugVector(DebugVector&& aOther)
+    : Base(std::move(aOther))
+    {
+        std::cout << "Move" << std::endl;
+    }
+};
+
 int main()
 {
     // lvalue
     {
-        std::vector<int> vec = {0, 1, 5};
+        DebugVector vec = {0, 1, 5};
 
         std::cout << '\n';
         foreach(int elem, vec)
@@ -113,25 +132,25 @@ int main()
     // rvalue
     {
         std::cout << '\n';
-        foreach(int elem, std::vector<int>(5, 3))
+        foreach(int elem, DebugVector(5, 3))
         {
             std::cout << elem << '\t';
         }
     
         std::cout << '\n';
-        foreach(const int elem, std::vector<int>(5, 3))
+        foreach(const int elem, DebugVector(5, 3))
         {
             std::cout << elem << '\t';
         }
     
         std::cout << '\n';
-        foreach(int& elem, std::vector<int>(5, 3))
+        foreach(int& elem, DebugVector(5, 3))
         {
             std::cout << elem << '\t';
         }
     
         std::cout << '\n';
-        foreach(const int& elem, std::vector<int>(5, 3))
+        foreach(const int& elem, DebugVector(5, 3))
         {
             std::cout << elem << '\t';
         }
@@ -141,7 +160,7 @@ int main()
     
     // const lvalue
     {
-        const std::vector<int> vec = {0, 1, 5};
+        const DebugVector vec = {0, 1, 5};
 
         std::cout << '\n';
         foreach(int elem, vec)
