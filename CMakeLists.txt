@@ -15,3 +15,5 @@ add_executable(swap swap.cpp)
 add_executable(optional optional.cpp)
 
 add_executable(variant variant.cpp)
+
+add_executable(function function.cpp)
